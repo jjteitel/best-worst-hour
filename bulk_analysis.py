@@ -13,7 +13,7 @@ CACHE_DIR.mkdir(exist_ok=True)
 
 
 @st.cache_data(ttl=86400)
-def get_nasdaq_tickers(limit=3000):
+def get_nasdaq_tickers(min_market_cap=1_000_000_000):
     """Fetch top NASDAQ tickers by market cap from NASDAQ website"""
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
@@ -40,11 +40,11 @@ def get_nasdaq_tickers(limit=3000):
                 market_cap = float(row.get('marketCap', '0').replace(',', ''))
             except:
                 market_cap = 0
-            stocks.append((symbol, market_cap))
+            if market_cap >= min_market_cap: stocks.append((symbol, market_cap))
 
     # Sort by market cap descending and take top N
     stocks.sort(key=lambda x: x[1], reverse=True)
-    tickers = [s[0] for s in stocks[:limit]]
+    tickers = [s[0] for s in stocks]
 
     return tickers
 
