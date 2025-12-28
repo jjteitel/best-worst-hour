@@ -1,6 +1,6 @@
-.env
 .idea/
 .venv/
 __pycache__/
 cache/
 .DS_Store
+*.iml
