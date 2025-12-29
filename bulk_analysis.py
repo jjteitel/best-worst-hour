@@ -267,14 +267,12 @@ if run_button:
         else:  # Both
             display_df = results_df.copy()
 
-        # Round for display
-        for col in display_df.columns:
-            if col != 'ticker':
-                display_df[col] = display_df[col].round(2)
+        # Format numeric columns as percentages
+        format_dict = {col: '{:.2f}%' for col in display_df.columns if col != 'ticker'}
 
         # Sortable dataframe
         st.dataframe(
-            display_df,
+            display_df.style.format(format_dict),
             use_container_width=True,
             height=600
         )
