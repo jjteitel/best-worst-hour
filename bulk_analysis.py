@@ -215,7 +215,7 @@ with col1:
 with col2:
     end_date = st.date_input("End Date", value=datetime.now())
 with col3:
-    view_mode = st.selectbox("View", ["Mean", "Median", "Both"])
+    view_mode = st.selectbox("View", ["Mean", "Median", "Both", "9:30-10", "10-11", "11-12", "12-13", "13-14", "14-15"])
 
 # Cache file path
 cache_file = CACHE_DIR / f"nasdaq_stats_v2_{start_date}_{end_date}.parquet"
@@ -265,6 +265,27 @@ if cache_file.exists():
             display_df = results_df[cols].copy()
             # Rename columns to remove "Median" suffix
             display_df.columns = ['ticker'] + hour_order
+        elif view_mode == "9:30-10":
+            cols = ['ticker'] + ['9:30-10 Mean'] + ['9:30-10 Median']
+            display_df = results_df[cols].copy()
+        elif view_mode == "10-11":
+            cols = ['ticker'] + ['10-11 Mean'] + ['10-11 Median']
+            display_df = results_df[cols].copy()
+        elif view_mode == "11-12":
+            cols = ['ticker'] + ['11-12 Mean'] + ['11-12 Median']
+            display_df = results_df[cols].copy()
+        elif view_mode == "12-13":
+            cols = ['ticker'] + ['12-13 Mean'] + ['12-13 Median']
+            display_df = results_df[cols].copy()
+        elif view_mode == "13-14":
+            cols = ['ticker'] + ['13-14 Mean'] + ['13-14 Median']
+            display_df = results_df[cols].copy()
+        elif view_mode == "14-15":
+            cols = ['ticker'] + ['14-15 Mean'] + ['14-15 Median']
+            display_df = results_df[cols].copy()
+        elif view_mode == "15-16":
+            cols = ['ticker'] + ['15-16 Mean'] + ['15-16 Median']
+            display_df = results_df[cols].copy()
         else:  # Both
             display_df = results_df.copy()
 
