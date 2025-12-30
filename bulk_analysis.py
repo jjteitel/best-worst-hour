@@ -231,10 +231,8 @@ with col2:
         st.rerun()
 
 if run_button:
-    # Check cache
     if cache_file.exists():
         st.info("Loading from cache...")
-        results_df = pd.read_parquet(cache_file)
     else:
         st.info("Fetching NASDAQ ticker list...")
         tickers = get_nasdaq_tickers()
@@ -248,6 +246,9 @@ if run_button:
             results_df.to_parquet(cache_file)
             st.success(f"Cached results to {cache_file}")
 
+# Load and display data if cache exists
+if cache_file.exists():
+    results_df = pd.read_parquet(cache_file)
     if not results_df.empty:
         st.subheader(f"Results: {len(results_df)} stocks analyzed")
 
