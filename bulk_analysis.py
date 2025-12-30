@@ -274,7 +274,7 @@ if cache_file.exists():
         # Sortable dataframe
         st.dataframe(
             display_df.style.format(format_dict),
-            use_container_width=True,
+            width='stretch',
             height=600
         )
 
