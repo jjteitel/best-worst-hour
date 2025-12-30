@@ -107,20 +107,24 @@ def calculate_hourly_stats(df, ticker):
 
     grouped = market_data.groupby(['date', 'market_hour']).agg({
         'Open': 'first',
-        'Close': 'last'
+        'Close': 'last',
+        'Volume': 'sum'
     })
     grouped['pct_return'] = (grouped['Close'] - grouped['Open']) / grouped['Open'] * 100
 
-    # Calculate both mean and median
-    stats = grouped.groupby('market_hour')['pct_return'].agg(['mean', 'median'])
+    # Calculate mean and median for returns, mean for volume
+    return_stats = grouped.groupby('market_hour')['pct_return'].agg(['mean', 'median'])
+    volume_stats = grouped.groupby('market_hour')['Volume'].mean()
 
     hour_order = ['9:30-10', '10-11', '11-12', '12-13', '13-14', '14-15', '15-16']
-    stats = stats.reindex(hour_order)
+    return_stats = return_stats.reindex(hour_order)
+    volume_stats = volume_stats.reindex(hour_order)
 
     result = {'ticker': ticker}
     for hour in hour_order:
-        result[f'{hour} Mean'] = stats.loc[hour, 'mean'] if hour in stats.index else None
-        result[f'{hour} Median'] = stats.loc[hour, 'median'] if hour in stats.index else None
+        result[f'{hour} Mean'] = return_stats.loc[hour, 'mean'] if hour in return_stats.index else None
+        result[f'{hour} Median'] = return_stats.loc[hour, 'median'] if hour in return_stats.index else None
+        result[f'{hour} Avg Volume'] = volume_stats.loc[hour] if hour in volume_stats.index else None
 
     return result
 
@@ -216,7 +220,7 @@ with col2:
     end_date = st.date_input("End Date", value=datetime.now())
 with col3:
     hour_order = ['9:30-10', '10-11', '11-12', '12-13', '13-14', '14-15', '15-16']
-    view_mode = st.selectbox("View", ["Mean", "Median", "Both", *hour_order])
+    view_mode = st.selectbox("View", ["Mean", "Median", "Volume", "Both", *hour_order])
 
 # Cache file path
 cache_file = CACHE_DIR / f"nasdaq_stats_v2_{start_date}_{end_date}.parquet"
@@ -266,14 +270,21 @@ if cache_file.exists():
             display_df = results_df[cols].copy()
             # Rename columns to remove "Median" suffix
             display_df.columns = ['ticker'] + hour_order
+        elif view_mode == "Volume":
+            cols = ['ticker'] + [f'{h} Avg Volume' for h in hour_order]
+            display_df = results_df[cols].copy()
+            display_df.columns = ['ticker'] + hour_order
         elif view_mode in hour_order:
             cols = ['ticker'] + [f'{view_mode} Median'] + [f'{view_mode} Mean']
             display_df = results_df[cols].copy()
         else:  # Both
             display_df = results_df.copy()
 
-        # Format numeric columns as percentages
-        format_dict = {col: '{:.2f}%' for col in display_df.columns if col != 'ticker'}
+        # Format numeric columns (percentages for returns, plain numbers for volume)
+        if view_mode == "Volume":
+            format_dict = {col: '{:,.0f}' for col in display_df.columns if col != 'ticker'}
+        else:
+            format_dict = {col: '{:.2f}%' for col in display_df.columns if col != 'ticker'}
 
         # Sortable dataframe
         st.dataframe(
