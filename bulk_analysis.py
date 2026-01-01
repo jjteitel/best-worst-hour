@@ -54,29 +54,17 @@ def get_market_hour(ts):
     minute = ts.minute
     if hour == 9 and minute >= 30:
         return '9:30-10'
-    elif hour == 10 and minute == 0:
+    elif hour == 10:
         return '10-11'
-    elif hour == 10 and minute == 30:
-        return '10-11'
-    elif hour == 11 and minute == 0:
+    elif hour == 11:
         return '11-12'
-    elif hour == 11 and minute == 30:
-        return '11-12'
-    elif hour == 12 and minute == 0:
+    elif hour == 12:
         return '12-13'
-    elif hour == 12 and minute == 30:
-        return '12-13'
-    elif hour == 13 and minute == 0:
+    elif hour == 13:
         return '13-14'
-    elif hour == 13 and minute == 30:
-        return '13-14'
-    elif hour == 14 and minute == 0:
+    elif hour == 14:
         return '14-15'
-    elif hour == 14 and minute == 30:
-        return '14-15'
-    elif hour == 15 and minute == 0:
-        return '15-16'
-    elif hour == 15 and minute == 30:
+    elif hour == 15:
         return '15-16'
     return None
 
@@ -138,10 +126,10 @@ def download_with_retry(tickers, start_date, end_date):
                 tickers,
                 start=start_date,
                 end=end_date,
-                interval='30m',
+                interval='15m',
                 group_by='ticker',
                 progress=False,
-                threads=False  # Disable threads to avoid SQLite locking
+                threads=True
             )
             return data, None
         except Exception as e:
