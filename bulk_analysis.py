@@ -59,13 +59,13 @@ def get_market_hour(ts):
     elif hour == 11:
         return '11-12'
     elif hour == 12:
-        return '12-13'
+        return '12-1'
     elif hour == 13:
-        return '13-14'
+        return '1-2'
     elif hour == 14:
-        return '14-15'
+        return '2-3'
     elif hour == 15:
-        return '15-16'
+        return '3-4'
     return None
 
 
@@ -104,7 +104,7 @@ def calculate_hourly_stats(df, ticker):
     return_stats = grouped.groupby('market_hour')['pct_return'].agg(['mean', 'median'])
     volume_stats = grouped.groupby('market_hour')['Volume'].mean()
 
-    hour_order = ['9:30-10', '10-11', '11-12', '12-13', '13-14', '14-15', '15-16']
+    hour_order = ['9:30-10', '10-11', '11-12', '12-1', '1-2', '2-3', '3-4']
     return_stats = return_stats.reindex(hour_order)
     volume_stats = volume_stats.reindex(hour_order)
 
@@ -207,7 +207,7 @@ with col1:
 with col2:
     end_date = st.date_input("End Date", value=datetime.now())
 with col3:
-    hour_order = ['9:30-10', '10-11', '11-12', '12-13', '13-14', '14-15', '15-16']
+    hour_order = ['9:30-10', '10-11', '11-12', '12-1', '1-2', '2-3', '3-4']
     view_mode = st.selectbox("View", ["Mean", "Median", "Volume", "Both", *hour_order])
 
 # Cache file path
@@ -246,7 +246,7 @@ if cache_file.exists():
         st.subheader(f"Results: {len(results_df)} stocks analyzed")
 
         # Filter columns based on view mode
-        hour_order = ['9:30-10', '10-11', '11-12', '12-13', '13-14', '14-15', '15-16']
+        hour_order = ['9:30-10', '10-11', '11-12', '12-1', '1-2', '2-3', '3-4']
 
         if view_mode == "Mean":
             cols = ['ticker'] + [f'{h} Mean' for h in hour_order]
