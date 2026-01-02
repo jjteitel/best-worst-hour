@@ -169,10 +169,12 @@ def download_batch(tickers, start_date, end_date, batch_size=50):
                 else:
                     ticker_data = data[ticker] if ticker in data.columns.get_level_values(0) else pd.DataFrame()
 
-                if not ticker_data.empty:
+                if not ticker_data.empty and not ticker_data['Close'].isna().all():
                     stats = calculate_hourly_stats(ticker_data, ticker)
                     if stats:
                         all_stats.append(stats)
+                    else:
+                        failed_tickers.append(ticker)
                 else:
                     failed_tickers.append(ticker)
             except Exception as e:
@@ -183,20 +185,28 @@ def download_batch(tickers, start_date, end_date, batch_size=50):
         time.sleep(0.5)  # Rate limiting
 
     # Retry failed tickers individually
+    still_failed = []
     if failed_tickers:
         status_text.text(f"Retrying {len(failed_tickers)} failed tickers individually...")
         for ticker in failed_tickers:
-            data, error = download_with_retry(ticker, start_date, end_date)
-            if not data.empty:
-                stats = calculate_hourly_stats(data, ticker)
-                if stats:
-                    all_stats.append(stats)
+            try:
+                data, error = download_with_retry(ticker, start_date, end_date)
+                if not data.empty and not data['Close'].isna().all():
+                    stats = calculate_hourly_stats(data, ticker)
+                    if stats:
+                        all_stats.append(stats)
+                    else:
+                        still_failed.append(ticker)
+                else:
+                    still_failed.append(ticker)
+            except Exception:
+                still_failed.append(ticker)
             time.sleep(1)
 
     progress_bar.empty()
     status_text.empty()
 
-    return pd.DataFrame(all_stats)
+    return pd.DataFrame(all_stats), still_failed
 
 
 # Streamlit UI
@@ -235,7 +245,10 @@ if run_button:
         st.success(f"Found {len(tickers)} NASDAQ stocks")
 
         st.info("Downloading price data (this may take a while)...")
-        results_df = download_batch(tickers, start_date, end_date)
+        results_df, failed_tickers = download_batch(tickers, start_date, end_date)
+
+        # Store failed tickers in session state
+        st.session_state['failed_tickers'] = failed_tickers
 
         # Save to cache
         if not results_df.empty:
@@ -247,6 +260,11 @@ if cache_file.exists():
     results_df = pd.read_parquet(cache_file)
     if not results_df.empty:
         st.subheader(f"Results: {len(results_df)} stocks analyzed")
+
+        # Show failed tickers if any
+        if 'failed_tickers' in st.session_state and st.session_state['failed_tickers']:
+            failed = st.session_state['failed_tickers']
+            st.warning(f"Failed to download data for {len(failed)} tickers: {', '.join(failed[:20])}{'...' if len(failed) > 20 else ''}")
 
         # Filter columns based on view mode
         hour_order = ['9:30-10', '10-11', '11-12', '12-1', '1-2', '2-3', '3-4']
