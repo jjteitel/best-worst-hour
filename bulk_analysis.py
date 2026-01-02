@@ -105,12 +105,17 @@ def calculate_hourly_stats(df, ticker):
     volume_stats = grouped.groupby('market_hour')['Volume'].mean()
     pct_positive = grouped.groupby('market_hour')['pct_return'].apply(lambda x: (x > 0).mean() * 100)
 
+    # Calculate overall period performance
+    first_close = df_copy['Close'].dropna().iloc[0] if not df_copy['Close'].dropna().empty else None
+    last_close = df_copy['Close'].dropna().iloc[-1] if not df_copy['Close'].dropna().empty else None
+    period_return = ((last_close - first_close) / first_close * 100) if first_close and last_close else None
+
     hour_order = ['9:30-10', '10-11', '11-12', '12-1', '1-2', '2-3', '3-4']
     return_stats = return_stats.reindex(hour_order)
     volume_stats = volume_stats.reindex(hour_order)
     pct_positive = pct_positive.reindex(hour_order)
 
-    result = {'ticker': ticker}
+    result = {'ticker': ticker, 'Period Return': period_return}
     for hour in hour_order:
         result[f'{hour} Mean'] = return_stats.loc[hour, 'mean'] if hour in return_stats.index else None
         result[f'{hour} Median'] = return_stats.loc[hour, 'median'] if hour in return_stats.index else None
@@ -221,7 +226,7 @@ with col2:
     end_date = st.date_input("End Date", value=datetime.now())
 with col3:
     hour_order = ['9:30-10', '10-11', '11-12', '12-1', '1-2', '2-3', '3-4']
-    view_mode = st.selectbox("View", ["Mean", "Median", "% Positive", "Volume", "Both", *hour_order])
+    view_mode = st.selectbox("View", ["Mean", "Median", "% Positive", "Volume", "Period Return", "Both", *hour_order])
 
 # Cache file path
 cache_file = CACHE_DIR / f"nasdaq_stats_v2_{start_date}_{end_date}.parquet"
@@ -287,6 +292,8 @@ if cache_file.exists():
             cols = ['ticker'] + [f'{h} Avg Volume' for h in hour_order]
             display_df = results_df[cols].copy()
             display_df.columns = ['ticker'] + hour_order
+        elif view_mode == "Period Return":
+            display_df = results_df[['ticker', 'Period Return']].copy()
         elif view_mode in hour_order:
             cols = ['ticker'] + [f'{view_mode} Median'] + [f'{view_mode} Mean']
             display_df = results_df[cols].copy()
